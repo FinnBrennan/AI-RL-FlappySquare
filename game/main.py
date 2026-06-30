@@ -1,8 +1,8 @@
 import pygame as pyg
 import gamelogic as gl
+from gamestate import Gamestate
 
-square = gl.Square()
-
+curr_gs = Gamestate()
 
 # Initialise Pygame, initialise the display as SCREEN, set the game title.
 pyg.init()
@@ -13,10 +13,7 @@ pyg.display.set_caption("Flappy Square")
 
 # Create an empty towers list, set the frame count to 0, create the clock.
 # Set the game as active, create the high score variables.
-towers = []
-frame_count = 0
 clock = pyg.time.Clock()
-game_active = True
 high_score = 0
 
 
@@ -39,44 +36,42 @@ while running:
 
             # Apply jump to the sprite if space or up arrow clicked and the game is active.
             if event.key == pyg.K_SPACE or event.key == pyg.K_UP:
-                if game_active:
-                    square.apply_jump()
+                if curr_gs.game_active:
+                    curr_gs.square.apply_jump()
 
             # Reset the game
             elif event.key == pyg.K_s:
-                gl.score = 0
-                frame_count = 0
-                towers = []
-                square = gl.Square()
-                game_active = True
+                curr_gs = Gamestate()
 
-    if game_active:
+                # Create a new gamestate instance
+
+    if curr_gs.game_active:
         SCREEN.fill((15, 15, 35))
 
         # Add a new tower to the list of towers.
-        if frame_count % gl.TOWER_SPAWN_INTERVAL == 0:
-            towers.append([gl.Tower_object(), False])
+        if curr_gs.frame_count % gl.TOWER_SPAWN_INTERVAL == 0:
+            curr_gs.towers.append([gl.Tower_object(), False])
         # draw every tower in the tower list at the new position.
         # if a tower has moved all the way left remove it.
-        for tower in towers:
+        for tower in curr_gs.towers:
             tower[0].move_tower()
             tower[0].spawn_tower(SCREEN)
 
-        if towers[0][0].x_pos <= -gl.TOWER_WIDTH:
-            towers.remove(towers[0])
+        if curr_gs.towers[0][0].x_pos <= -gl.TOWER_WIDTH:
+            curr_gs.towers.remove(curr_gs.towers[0])
 
         # Apply gravity and draw the square.
-        square.apply_gravity()
-        square.draw_to_screen(SCREEN)
+        curr_gs.square.apply_gravity()
+        curr_gs.square.draw_to_screen(SCREEN)
 
         # Update and display score + info:
-        score = gl.score_counter(square, towers)
-        text1 = score_font.render(f"Score: {score}", True, (255, 0, 0))
+        curr_gs.score = gl.score_counter(curr_gs.square, curr_gs.towers, curr_gs.score)
+        text1 = score_font.render(f"Score: {curr_gs.score}", True, (255, 0, 0))
 
         # If score => high score, use the current score as the display text and change color.
-        if gl.score >= high_score:
+        if curr_gs.score >= high_score:
             color = (255, 0, 0)
-            high_score = gl.score
+            high_score = curr_gs.score
         else:
             color = (255, 255, 255)
 
@@ -92,24 +87,26 @@ while running:
         # -> basically no complexity trade off since only 3-5 towers loaded at once.
         # Note: towers will never be empty as a tower is spawned at frame count = 0.
         if (
-            any(gl.collides(square, t[0]) for t in towers)
-            or 0 > square.y_pos
-            or square.y_pos > gl.SCREEN_HEIGHT
+            any(gl.collides(curr_gs.square, t[0]) for t in curr_gs.towers)
+            or 0 > curr_gs.square.y_pos
+            or curr_gs.square.y_pos > gl.SCREEN_HEIGHT
         ):
-            game_active = False
+            curr_gs.game_active = False
 
-        frame_count += 1
+        curr_gs.frame_count += 1
 
     # Game over screen (Click s to reset).
     else:
         SCREEN.fill((15, 15, 35))
 
-        text = gameover_font.render(f"GAME OVER - SCORE: {score}", True, (255, 0, 0))
+        text = gameover_font.render(
+            f"GAME OVER - SCORE: {curr_gs.score}", True, (255, 0, 0)
+        )
 
         text2 = gameover_font.render(f"HIGH SCORE: {high_score}", True, (0, 200, 180))
 
-        if high_score <= score:
-            if score != 0:
+        if high_score <= curr_gs.score:
+            if curr_gs.score != 0:
                 text2 = gameover_font.render(
                     f"NEW HIGH SCORE: {high_score}", True, (0, 200, 180)
                 )

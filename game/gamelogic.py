@@ -4,26 +4,44 @@ import random as rand
 # Game Logic
 
 
+# Difficulty settings, (easy is default)
+# Change in code from "easy", "medium", "hard"
+select_diff = "medium"
+
+if select_diff == "easy":
+    gravity = 0.5
+    jump_vel = -7.5
+    tower_gap = 200
+    tower_spawn_interval = 150
+elif select_diff == "medium":
+    gravity = 0.75
+    jump_vel = -10
+    tower_gap = 180
+    tower_spawn_interval = 120
+else:
+    gravity = 1
+    jump_vel = -12.5
+    tower_gap = 160
+    tower_spawn_interval = 90
+
+
 # Constants
 # Screen
 SCREEN_HEIGHT = 750
 SCREEN_WIDTH = 750
 
 # Sprite
-GRAVITY = 0.5
+GRAVITY = gravity
 SPRITE_START_X = 100
 SPRITE_START_Y = 300
-JUMP_VEL = -7.5
+JUMP_VEL = jump_vel
 
 # Tower
 MIN_TOWER_HEIGHT = 50
 TOWER_WIDTH = 50
-TOWER_GAP = 200
+TOWER_GAP = tower_gap
 TOWER_SPEED = 3
-TOWER_SPAWN_INTERVAL = 120  # (frames)
-
-# Main score
-score = 0
+TOWER_SPAWN_INTERVAL = tower_spawn_interval  # (frames)
 
 
 class Square:
@@ -99,8 +117,7 @@ def collides(square, tower):
     return sprite_rect.colliderect(bottom_rect) or sprite_rect.colliderect(top_rect)
 
 
-def score_counter(square, towers):
-    global score
+def score_counter(square, towers, score):
 
     for tower in towers:
         if not tower[1]:
