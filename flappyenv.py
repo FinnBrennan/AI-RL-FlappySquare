@@ -3,11 +3,18 @@
 
 from game.gamestate import Gamestate
 from game import gamelogic as gl
+import pygame as pyg
 
 
 class Flappyenv:
 
-    def __init__(self):
+    def __init__(self, render):
+        self.render_mode = render
+        if self.render_mode:
+            pyg.init()
+            self.screen = pyg.display.set_mode((gl.SCREEN_WIDTH, gl.SCREEN_HEIGHT))
+            pyg.display.set_caption("Flappy Square Agent ENV")
+            self.clock = pyg.time.Clock()
         self.state = Gamestate()
 
     def get_observation(self):
@@ -64,6 +71,7 @@ class Flappyenv:
             self.state.square.apply_jump()
         self.state.square.apply_gravity()
 
+        score_before = self.state.score
         self.state.score = gl.score_counter(
             self.state.square, self.state.towers, self.state.score
         )
@@ -77,5 +85,21 @@ class Flappyenv:
 
         self.state.frame_count += 1
         observation = self.get_observation()
-        reward = 1  # (idk yet temporary)
+
+        if self.render_mode:
+            pyg.event.pump()
+            self.screen.fill((15, 15, 35))
+            for tower in self.state.towers:
+                tower[0].spawn_tower(self.screen)
+            self.state.square.draw_to_screen(self.screen)
+            pyg.display.flip()
+            self.clock.tick(60)
+
+        if done == True:
+            reward = -1.0
+        elif done == False and score_before < self.state.score:
+            reward = 1.0
+        else:
+            reward = 0.1
+
         return (observation, reward, done)

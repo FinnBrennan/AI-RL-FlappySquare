@@ -1,5 +1,5 @@
 import pygame as pyg
-import gamelogic as gl
+from . import gamelogic as gl
 
 # Game State
 
